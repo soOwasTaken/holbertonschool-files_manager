@@ -1,36 +1,36 @@
-import crypto from "crypto";
-import dbClient from "../utils/db";
+import crypto from 'crypto';
+import dbClient from '../utils/db';
 
 class UsersController {
   static async postNew(req, res) {
     const { email, password } = req.body;
 
     if (!email) {
-      return res.status(400).json({ error: "Missing email" });
+      return res.status(400).json({ error: 'Missing email' });
     }
     if (!password) {
-      return res.status(400).json({ error: "Missing password" });
+      return res.status(400).json({ error: 'Missing password' });
     }
 
-    // Check if the email already exists
-    const existingUser = await dbClient.db
-      .collection("users")
-      .findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "Already exist" });
+    // Check if the email already exists in the database
+    const user = await dbClient.db.collection('users').findOne({ email });
+    if (user) {
+      return res.status(400).json({ error: 'Already exist' });
     }
 
-    // Hash the password
+    // Hash the password using SHA1
     const hashedPassword = crypto
-      .createHash("sha1")
+      .createHash('sha1')
       .update(password)
-      .digest("hex");
+      .digest('hex');
 
-    // Create the new user
-    const newUser = await dbClient.db
-      .collection("users")
+    // Insert the new user into the database
+    const result = await dbClient.db
+      .collection('users')
       .insertOne({ email, password: hashedPassword });
-    return res.status(201).json({ id: newUser.insertedId, email });
+
+    // Return the new user's email and id
+    return res.status(201).json({ id: result.insertedId, email });
   }
 }
 
